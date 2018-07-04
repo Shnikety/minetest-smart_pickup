@@ -6,8 +6,17 @@ licencing and acknowledgments
 --]]
 local load_time_start = minetest.get_us_time()
 
+---------------- the following Built in Values may be changed ------------------
+local player_collect_height = 1 --added to player pos y value, not recommended for change
+local pickup_radius = 1.5
+	--tonumber(minetest.settings:get("item_drop.pickup_radius")) or 1.75
+local magnet_radius = pickup_radius + 1.5
+	--(tonumber(minetest.settings:get("item_drop.magnet_radius")) or 3)
+local velocity_gain = 0.1 --a multiplier, not sure if this makes much difference
+local
+--------------------------------------------------------------------------------
 
-local player_collect_height = 1.3 --added to their pos y value
+
 local pickup_gain =
 	tonumber(minetest.settings:get("item_drop.pickup_sound_gain"))
 	or 0.2
@@ -20,9 +29,6 @@ local automode =
 	(mode == "Auto" or mode == "Both")
 local keymode =
 	(mode == "KeyPress" or mode == "Both")
-local pickup_radius =
-	tonumber(minetest.settings:get("item_drop.pickup_radius"))
-	or 1.75
 local key_invert
 local keytype
 if keymode then
@@ -33,9 +39,6 @@ if keymode then
 		minetest.settings:get("item_drop.keytype")
 		or "aux1"
 end
-local magnet_radius = pickup_radius + (
-	tonumber(minetest.settings:get("item_drop.magnet_radius"))
-	or 3)
 local players = {}
 minetest.register_on_joinplayer(function(player)
 	if minetest.get_player_privs(player:get_player_name()).interact then
@@ -111,38 +114,26 @@ local function collect_item(ent, pos, player)
 	ent:on_punch(player)
 end
 
-local function flyt(object, active_key, v)
-	local lua = object:get_luaentity()
-	if object == nil or lua == nil or lua.itemstring == nil then
-		return
-	end
-	--[[
-	v = vector.multiply(object:getvelocity(), .7)
-	if vector.length(v) < .5 then
-		object:setvelocity({x = 0,y = 0,z = 0})
-		object:get_luaentity().physical_state = true
-		object:get_luaentity().object:set_properties({physical = true})
+local function flyt(object)
+	local vel = object:getvelocity()
+	local ent = object:get_luaentity()
+	if not (object and ent and ent.itemstring) then
+		table.remove(flyt_list, i)
+		--minetest.chat_send_all("object removed")
 	else
-		object:setvelocity(v)
-		minetest.after(1/vector.length(v), flyt, object)
-	end
-	--]]
-	if mode == "Auto"
-	or keymode and active_key then
-		--local v = vector.multiply(v, 2)
-		--v.y = v.y + 0.1
-		object:setacceleration({x=-(math.abs(v.x)*2),y=-(math.abs(v.y)*2),z=-(math.abs(v.z)*2)})
-		object:setvelocity(vector.multiply(v, 2))
-		object:get_luaentity().physical_state = true
-		object:get_luaentity().object:set_properties({
-			physical = true,
-			weight = 1,
-		})
-		--minetest.after(1/vector.length(v), flyt, object)
-	else
-		object:setacceleration({x = 0,y = -1,z = 0})
-		object:setvelocity({x = 0,y = 0,z = 0})
-		table.remove(flyt_list, object)
+		function equalize(n, step, zero)
+			return (n<zero-step and n+step) or (n>zero+step and n-step) or zero
+		end
+
+		if vel.x == 0 and vel.z == 0 then
+			table.remove(flyt_list, i)
+		else
+			vel.x = equalize(vel.x, vel.x*0.0002, 0)
+			vel.y = equalize(vel.y, vel.y*0.00002, -1)
+			vel.z = equalize(vel.z, vel.z*0.0002, 0)
+
+			object:setvelocity(vel)
+		end
 	end
 end
 
@@ -169,11 +160,13 @@ minetest.after(3.0, pickup_step)
 local timer = 0
 local flyt_list = {}
 minetest.register_globalstep(function(dtime)
+--[[
 	timer = timer + dtime
 	if timer >=1 then
 		for i,object in pairs(flyt_list) do
 			local vel = object:getvelocity()
-			if not object or object:get_luaentity() == nil then
+			local ent = object:get_luaentity()
+			if not (object and ent and ent.itemstring) then
 				table.remove(flyt_list, i)
 				--minetest.chat_send_all("object removed")
 			else
@@ -194,22 +187,27 @@ minetest.register_globalstep(function(dtime)
 		end
 		timer = 0
 	end
+--]]
 	for i = 1,#players do
 		local player = players[i]
 		local pos = player:getpos()
-		pos.y = pos.y+1
+		pos.y = pos.y+player_collect_height
 		local name = player:get_player_name()
-		local pickup_timer = 0
+		local pickup_timer = 0 --allows items to be picked up one at a time
 
 		--local items = {}
 		local objlist = minetest.get_objects_inside_radius(pos, magnet_radius)
 		for i = 1,#objlist do
 			local object = objlist[i]
 			local ent = object:get_luaentity()
-			local pos2 = object:getpos()
 			local cv = object:getvelocity() or {x=0,y=0,z=0}
-			local v = {x=pos.x-pos2.x+cv.x*.1,y=pos.y-pos2.y+cv.y*.1,z=pos.z-pos2.z+cv.z*.1}
-			--local v = vector.add(vector.subtract(pos, object:getpos()), vector.multiply(object:getvelocity() or {x=0,y=0,z=0},.1))
+			local v = vector.add(vector.subtract(pos, object:getpos()), vector.multiply(cv, velocity_gain))
+			--[[
+			local v, pos2 = {}, object:getpos()
+			for _, axis in ipairs{'x','y','z'} do
+				v[axis] = pos[axis]-pos2[axis]+cv[axis]*velocity_gain
+			end
+			--]]
 
 			if ent and not object:is_player() then
 				if ent.name == "__builtin:item"
@@ -228,8 +226,9 @@ minetest.register_globalstep(function(dtime)
 					else --if vector.length(v) > pickup_radius then
 						if mode == "Auto"
 						or keymode and has_keys_pressed(player) then
+							--if object is in 'flyt_list' and going fast then ignore it
 							local ignore
-							if vector.length(object:getvelocity()) > 1 then
+							if vector.length(cv) > 1 then
 								for i,flyt_obj in pairs(flyt_list) do
 									if object == flyt_obj then
 										ignore = true
@@ -238,17 +237,16 @@ minetest.register_globalstep(function(dtime)
 								end
 							end
 							if not ignore then
-								--v = vector.multiply(v, 2)
-								--v.y = v.y*2
 								object:set_properties({
 									physical = true,
 								})
-								object:setvelocity({x=v.x*2,y=v.y*2,z=v.z*2})
-								--minetest.after(1/vector.length(v), flyt, object)
+								v = vector.multiply(v, 2)
+								--v.y = v.y*2
+								object:setvelocity(v)
 								table.insert(flyt_list, object)
+								minetest.after(1/vector.length(v), flyt, object)
 							end
 						end
-						--flyt(object, has_keys_pressed(player), vector.multiply(v, 2))
 					end
 				end
 			end
