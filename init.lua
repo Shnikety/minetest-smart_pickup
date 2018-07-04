@@ -60,6 +60,7 @@ end)
 
 -- adds the item to the inventory and removes the object
 -- borrowed from tacotexmex @ https://github.com/minetest-mods/item_drop
+-- and from https://github.com/Aurailus/WCILA
 local function collect_item(ent, pos, player)
 	local item = ItemStack(ent.itemstring)
 	local inv = player:get_inventory()
