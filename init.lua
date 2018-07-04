@@ -59,6 +59,7 @@ minetest.register_on_dieplayer(function(player)
 end)
 
 -- adds the item to the inventory and removes the object
+-- borrowed from tacotexmex @ https://github.com/minetest-mods/item_drop
 local function collect_item(ent, pos, player)
 	local item = ItemStack(ent.itemstring)
 	local inv = player:get_inventory()
@@ -145,6 +146,7 @@ local function flyt(object, active_key, v)
 end
 
 --[[
+-- borrowed from tacotexmex @ https://github.com/minetest-mods/item_drop
 local function pickup_step()
 	local got_item
 	--local players = minetest.get_connected_players()
@@ -254,6 +256,7 @@ minetest.register_globalstep(function(dtime)
 end)
 
 --Throw items using player's velocity
+-- borrowed from https://github.com/jordan4ibanez/drops
 function minetest.item_drop(itemstack, dropper, pos)
 
 	--if player then do modified item drop
@@ -290,6 +293,7 @@ function minetest.item_drop(itemstack, dropper, pos)
 end
 
 ---[[
+-- borrowed from tacotexmex @ https://github.com/minetest-mods/item_drop
 if not minetest.settings:get_bool("creative_mode") then
 	function minetest.handle_node_drops(pos, drops)
 		for i = 1,#drops do
