@@ -14,12 +14,12 @@ some code borrowed from other mods, see comments in init.lua for details
 * Player settings may be configured from within the game itself.
   (Settings tab > Advanced settings > Mods > item_drop)
 * `pickup_mode`: There are three unique modes to choose from...
-  * Auto: items within magnet radius automaticly zoom towards player and are picked up when within `pickup_radius`.
+  * Auto: items within `magnet_radius` automaticly zoom towards player and are picked up when within `pickup_radius`.
   * KeyPress: same as Auto but the player has to press a key otherwise items are ignored.
   * Both: use key to pull items towards you, items within `pickup_radius` are automatic.
 * `keytype`: What key to use to pickup items.
 * `keyinvert`: Collect items when the key is not pressed instead of when it is pressed.
 * `pickup_sound_gain`: There is a sound when picking up items. This controls the volume.
-* `pickup_particle`: Displays a particle of the item picked up above the player if true.
+* `pickup_particle`: Displays a particle of the item picked up above the player if `true`.
 * `pickup_radius`: The maximum distance (in nodes) from which items are collected.
-* `magnet_radius`: Items between pickup_radius and this begin flying to the player.
+* `magnet_radius`: Items between `pickup_radius` and this begin flying to the player.
