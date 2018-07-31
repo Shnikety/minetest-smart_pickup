@@ -1,44 +1,23 @@
 --[[ TODO:
-clean up code
-explore alternate organizations
-create / delete appropriate user settings or variables
-licencing and acknowledgments
+clean up user settings
 --]]
 local load_time_start = minetest.get_us_time()
 
+-- TODO eliminate this
+smart_pickup = {path=minetest.get_modpath("smart_pickup")}
+dofile(smart_pickup.path..DIR_DELIM..helper.lua)
+
+-- BUILD USER SET VARIABLES FROM "settingtypes.txt"
+populate_from_settingtypes(_ENV)
+
 ---------------- the following Built in Values may be changed ------------------
 local player_collect_height = 1 --added to player pos y value, not recommended for change
-local pickup_radius = 1.5
-	--tonumber(minetest.settings:get("item_drop.pickup_radius")) or 1.75
-local magnet_radius = pickup_radius + 1.5
-	--(tonumber(minetest.settings:get("item_drop.magnet_radius")) or 3)
 local velocity_gain = 0.1 --a multiplier, not sure if this makes much difference
-local
 --------------------------------------------------------------------------------
 
-
-local pickup_gain =
-	tonumber(minetest.settings:get("item_drop.pickup_sound_gain"))
-	or 0.2
-local pickup_particle =
-	minetest.settings:get_bool("item_drop.pickup_particle") ~= false
-local mode =
-	minetest.settings:get("item_drop.pickup_mode")
-	or "Auto"
-local automode =
-	(mode == "Auto" or mode == "Both")
-local keymode =
-	(mode == "KeyPress" or mode == "Both")
-local key_invert
-local keytype
-if keymode then
-	key_invert =
-		minetest.settings:get_bool("item_drop.keyinvert")
-		or false
-	keytype =
-		minetest.settings:get("item_drop.keytype")
-		or "aux1"
-end
+--TODO wtf local pickup_particle = pickup_particle ~= false
+local automode = mode == "Auto" or mode == "Both"
+local keymode = mode == "KeyPress" or mode == "Both"
 local players = {}
 minetest.register_on_joinplayer(function(player)
 	if minetest.get_player_privs(player:get_player_name()).interact then
@@ -328,7 +307,7 @@ end
 
 
 local time = (minetest.get_us_time() - load_time_start) / 1000000
-local msg = "[item_drop] loaded after ca. " .. time .. " seconds."
+local msg = "[smart_pickup] loaded after ca. " .. time .. " seconds."
 if time > 0.01 then
 	print(msg)
 else

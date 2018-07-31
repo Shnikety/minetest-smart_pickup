@@ -1,24 +1,23 @@
 #There are three unique pickup methods to choose from
-#Auto: items within magnet radius automaticly zoom towards player and are picked up when within pickup radius
+#Auto: items autocratically zoom towards player and are picked up when within pickup radius
 #KeyPress: same as auto but the player has to press a key otherwise items are ignored
 #Both: use key to pull items towards you, items within pickup radius are automatic
-item_drop.pickup_mode (Item pickup mode) enum Auto Auto,KeyPress,Both
+smart_pickup.mode (Item pickup mode) enum Auto Auto,KeyPress,Both
 
-#What key to use to pickup items
-item_drop.keytype (Pickup keytype) enum aux1 aux1,sneak,left_and_right,RMB,sneak_and_RMB
+#What key to use to pickup items. (ignored with Auto mode)
+smart_pickup.keytype (Pickup keytype) enum aux1 aux1,sneak,left_and_right,RMB,sneak_and_RMB
 
-#Collect items when the key is not pressed instead of when it is pressed
-item_drop.keyinvert (Invert pickup key) bool false
+#Collect items when the key is not pressed instead of when it is pressed.
+smart_pickup.keyinvert (Invert pickup key) bool false
 
-#The volume of the pickup sound
-item_drop.pickup_sound_gain (Pickup sound gain) float 0.4
+#The volume of the pickup sound.
+smart_pickup.pickup_sound_gain (Pickup sound gain) float 0.4 0 1
 
-#Display a particle of the item picked up above the player
-item_drop.pickup_particle (Pickup particle) bool true
+#Display a particle of the item picked up above the player.
+smart_pickup.pickup_particle (Pickup particle) bool true
 
-#Player pickup radius, the maximum distance from which items can be collected
-item_drop.pickup_radius (Pickup radius) float 1.75
+#Player pickup radius, the maximum distance from which items can be collected.
+smart_pickup.pickup_radius (Pickup radius) float 1.75 0.2 4
 
-#Magnet radius, items between pickup_radius and this begin flying to the player
-item_drop.magnet_radius (Magnet radius) float 3
-
+#Magnet radius, items within this range will fly to the player.
+smart_pickup.magnet_radius (Magnet radius) float 3 0 4

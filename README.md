@@ -22,4 +22,4 @@ some code borrowed from other mods, see comments in init.lua for details
 * `pickup_sound_gain`: There is a sound when picking up items. This controls the volume.
 * `pickup_particle`: Displays a particle of the item picked up above the player if `true`.
 * `pickup_radius`: The maximum distance (in nodes) from which items are collected.
-* `magnet_radius`: Items between `pickup_radius` and this begin flying to the player.
+* `magnet_radius`: Items within this range will fly to the player.
