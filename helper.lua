@@ -32,9 +32,17 @@ populate_from_settingtypes = function (pointer, flags)
 		error("populate_from_settingtypes func requires a pointer to a table")
 	end
 	flags = flags or {}
+<<<<<<< HEAD
 	local setting = {}
 	local modname = minetest.get_current_modname()
 	local path = minetest.get_modpath(modname)
+=======
+	--local modname = minetest.get_current_modname()
+	--pointer.path = pointer.path
+	--pointer.defaults = {}
+	--pointer.settings = {}
+	local path = pointer.path or minetest.get_modpath(modname)
+>>>>>>> 56cdfd5a6760efc2f3ccaa9a749fb278d840b2b3
 	local filename = path..DIR_DELIM..'settingtypes.txt'
 	local file = io.open(filename, 'rb')
 

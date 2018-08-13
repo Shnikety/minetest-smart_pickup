@@ -4,6 +4,8 @@ replace 'player_collect_height' with a more sophisticated system
 create a node blacklist
 create a mod formspec for blacklist
 more testing
+test and debug
+perhaps move helper.lua to a separate mod
 --]]
 local load_time_start = minetest.get_us_time()
 
