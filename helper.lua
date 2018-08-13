@@ -4,8 +4,6 @@
 -- with help from Linuxdirk @ https://forum.minetest.net/viewtopic.php?p=285505#
 
 -- This file uses "settingtypes.txt" to build Lua variables for a MineTest mod.
--- All variables defined MUST be of the form "mymod.variable"
--- where mymod is returned as a global table if not already defined as such.
 
 -- see also https://dev.minetest.net/settingtypes.txt
 --------------------------------------------------------------------------------

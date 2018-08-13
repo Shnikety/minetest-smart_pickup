@@ -1,16 +1,28 @@
 --[[ TODO:
 explore programing refinements in 'helper.lua'
 replace 'player_collect_height' with a more sophisticated system
-create a node blacklist
+DONE: create a node blacklist
 create a mod formspec for blacklist
+perhaps create a formspec for editing settings from within game
 more testing
-test and debug
 perhaps move helper.lua to a separate mod
 --]]
 local load_time_start = minetest.get_us_time()
 
+smart_pickup = {
+	path=minetest.get_modpath("smart_pickup"),
+	blacklist={
+		["default:leaves"]=true,
+		["default:bush_leaves"]=true,
+		["default:acacia_bush_leaves"]=true,
+		["default:jungleleaves"]=true,
+		["default:acacia_leaves"]=true,
+		["default:aspen_leaves"]=true,
+		["default:pine_needles"]=true,
+	}
+}
+
 -- TODO eliminate this
-smart_pickup = {path=minetest.get_modpath("smart_pickup")}
 dofile(smart_pickup.path..DIR_DELIM.."helper.lua")
 
 -- BUILD USER SET VARIABLES FROM "settingtypes.txt"
@@ -198,6 +210,10 @@ minetest.register_globalstep(function(dtime)
 				if ent.name == "__builtin:item"
 				and ent.dropped_by ~= name
 				and ent.itemstring ~= ""then
+					if smart_pickup.blacklist[ent.itemstring] then
+						ent.dropped_by = name
+						break
+					end
 ---[[
 					if vector.length(v) <= pickup_radius then
 						if automode
