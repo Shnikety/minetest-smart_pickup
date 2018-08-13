@@ -1,11 +1,12 @@
 --[[ TODO:
-clean up user settings
+test and debug
+perhaps move helper.lua to a separate mod
 --]]
 local load_time_start = minetest.get_us_time()
 
 -- TODO eliminate this
 smart_pickup = {path=minetest.get_modpath("smart_pickup")}
-dofile(smart_pickup.path..DIR_DELIM..helper.lua)
+dofile(smart_pickup.path..DIR_DELIM..'helper.lua')
 
 -- BUILD USER SET VARIABLES FROM "settingtypes.txt"
 populate_from_settingtypes(_ENV)

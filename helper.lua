@@ -31,10 +31,10 @@ populate_from_settingtypes = function (pointer, flags)
 
 	flags = flags or {}
 	--local modname = minetest.get_current_modname()
-	--pointer.path = pointer.path or minetest.get_modpath(modname)
+	--pointer.path = pointer.path
 	--pointer.defaults = {}
 	--pointer.settings = {}
-	local path = pointer.path
+	local path = pointer.path or minetest.get_modpath(modname)
 	local filename = path..DIR_DELIM..'settingtypes.txt'
 	local file = io.open(filename, 'rb')
 
