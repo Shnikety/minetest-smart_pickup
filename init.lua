@@ -120,9 +120,6 @@ function depack(t)
 	if type(t) ~= 'table' then
 		return error(string.format("type: %s\tvalue: %q", type(t), t))
 	end
-	--if #t == 0 then
-	--	return "[empty list]"
-	--end
 
 	local s = ""
 	for k,v in pairs(t) do
@@ -130,60 +127,75 @@ function depack(t)
 	end
 	return s
 end
-minetest.register_chatcommand("item_ignore", {
+local command = {}
+minetest.register_chatcommand("item", {
+	privs = {
+		interact = true
+	},
+	params = "<cmd> <itemstring>",
+	description = "from mod smart_pickup",
+	func = function(name, params)
+		local args = extract(params)
+		local case, itemstring = unpack(args)
+		if not command[case] then return false, "what!*?" end
+		rb, rs = command[case](name, itemstring)
+		return rb, rs
+	end
+})
+minetest.register_chatcommand("item ignore", {
 	privs = {
 		interact = true
 	},
 	params = "<itemstring>",
-	description = "blacklist item so that it will not be picked up.",
-	func = function(name, itemstring)
-		local item_list = smart_pickup.players[name]
-		if not minetest.registered_items[itemstring] then
-			return false, string.format("%q is not a registered item.", itemstring)
-		end
-
-		item_list[itemstring] = true
-		record(name)
-		return true, string.format("%q added to blacklist.", itemstring)
-	end
+	description = "blacklist item so that it will be ignored and not be picked up."
 })
-minetest.register_chatcommand("item_pickup", {
+command.ignore = function(name, itemstring)
+	local item_list = smart_pickup.players[name]
+	if not minetest.registered_items[itemstring] then
+		return false, string.format("%q is not a registered item.", itemstring)
+	end
+
+	item_list[itemstring] = true
+	record(name)
+	return true, string.format("%q added to blacklist.", itemstring)
+end
+minetest.register_chatcommand("item pickup", {
 	privs = {
 		interact = true
 	},
 	params = "<itemstring>",
-	description = "remove item from blacklist so that it will be picked up.",
-	func = function(name, itemstring)
-		local item_list = smart_pickup.players[name]
-		if item_list[itemstring] == nil then
-			return false, depack(item_list)or"[empty list]"
-		end
+	description = "remove item from blacklist so that it will be picked up."
+})
+command.pickup = function(name, itemstring)
+	local item_list = smart_pickup.players[name]
+	if item_list[itemstring] == nil then
+		return false, depack(item_list)or"[empty list]"
+	end
 
-		item_list[itemstring] = false
-		record(name)
-		return true, depack(item_list)or"[empty list]"
-	end
-})
-minetest.register_chatcommand("item_list", {
+	item_list[itemstring] = false
+	record(name)
+	return true, depack(item_list) or "[empty list]"
+end
+minetest.register_chatcommand("item list", {
 	privs = {
 		interact = true
 	},
-	description = "list items that are ignored.",
-	func = function(name)
-		local item_list = smart_pickup.players[name]
-		minetest.chat_send_player(name, depack(item_list))
-	end
+	description = "list items that are ignored."
 })
-minetest.register_chatcommand("item_clear", {
+command.list = function(name)
+	local item_list = smart_pickup.players[name]
+	minetest.chat_send_player(name, depack(item_list))
+end
+minetest.register_chatcommand("item clear", {
 	privs = {
 		interact = true
 	},
-	description = "clear list of items to be ignored.",
-	func = function(name)
-		smart_pickup.players[name] = ""
-		record(name)
-	end
+	description = "clear list of items to be ignored."
 })
+command.clear = function(name)
+	smart_pickup.players[name] = ""
+	record(name)
+end
 
 --[[
 zcg.load_all = function()

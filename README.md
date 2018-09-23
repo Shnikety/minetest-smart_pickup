@@ -3,11 +3,13 @@
 Lets players choose weather to add item-drops from nodes to there inventory or drop them in the game.
 
 Currently in development:
-a blacklist of items to be ignored & not picked up along with chat commands
+a blacklist of items to be ignored and not picked up along with chat commands
 and a menu to edit the list.
 
-Makes mineing and harvesting far more pleasant, even if editing the list of items to be ignored is painfull right now.
-
+This makes mining and harvesting far more pleasant, even if editing the list of
+items to be ignored is painfull right now. Note that ignored items can still be
+picked up manualy via point and click. Dropped items are also always ignored
+(with no timers or anything).
 
 Based on [variouse versions](https://forum.minetest.net/search.php?keywords=item+drop&terms=all&author=&fid%5B%5D=46&sc=1&sf=titleonly&sr=topics&sk=t&sd=d&st=0&ch=300&t=0&submit=Search)
 of [item_drop] mod for MineTest with refinements and new features. See also [PilzAdam's original](https://forum.minetest.net/viewtopic.php?t=2656).
@@ -34,8 +36,8 @@ some code borrowed from other mods, see comments in init.lua for details
 ## Chat Commands:
 (Please note that these are very primitive, and annoying to use, right now.  Expect these to change.)
 
-* `item_ignore [item]`: will cause the player to ignore and not pick up valid items.
-* `item_pickup [item]`: lets various modes auto pick-up the item.
-This is default behavior so this just undoes the 'item_ignore' command.
+* `item_ignore <item>`: will cause the player to ignore and not pick up valid items.
+* `item_pickup <item>`: lets various modes auto pick-up the item.
+This is default behavior so this just undoes 'item_ignore.'
 * `item_list`: prints out the list of items that are not to be picked up.
 * `item_clear`: clears all entries in the blacklist of items.
