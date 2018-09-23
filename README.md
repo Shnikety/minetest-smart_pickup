@@ -36,8 +36,8 @@ some code borrowed from other mods, see comments in init.lua for details
 ## Chat Commands:
 (Please note that these are very primitive, and annoying to use, right now.  Expect these to change.)
 
-* `item_ignore <item>`: will cause the player to ignore and not pick up valid items.
-* `item_pickup <item>`: lets various modes auto pick-up the item.
+* `item_ignore <ItemString>`: will cause the player to ignore and not pick up valid items.
+* `item_pickup <ItemString>`: lets various modes auto pick-up the item.
 This is default behavior so this just undoes 'item_ignore.'
 * `item_list`: prints out the list of items that are not to be picked up.
 * `item_clear`: clears all entries in the blacklist of items.

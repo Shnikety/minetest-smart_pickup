@@ -132,7 +132,7 @@ minetest.register_chatcommand("item", {
 	privs = {
 		interact = true
 	},
-	params = "<cmd> <itemstring>",
+	params = "<command> <ItemString>",
 	description = "from mod smart_pickup",
 	func = function(name, params)
 		local args = extract(params)
@@ -146,7 +146,7 @@ minetest.register_chatcommand("item ignore", {
 	privs = {
 		interact = true
 	},
-	params = "<itemstring>",
+	params = "<ItemString>",
 	description = "blacklist item so that it will be ignored and not be picked up."
 })
 command.ignore = function(name, itemstring)
@@ -163,7 +163,7 @@ minetest.register_chatcommand("item pickup", {
 	privs = {
 		interact = true
 	},
-	params = "<itemstring>",
+	params = "<ItemString>",
 	description = "remove item from blacklist so that it will be picked up."
 })
 command.pickup = function(name, itemstring)
