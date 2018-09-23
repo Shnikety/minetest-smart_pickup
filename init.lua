@@ -1,8 +1,9 @@
 --[[ TODO:
 explore programing refinements in 'helper.lua'
 replace 'player_collect_height' with a more sophisticated system
-DONE: create a node blacklist
-create a mod formspec for blacklist
+create a mod formspec
+need to be able to add groups to the blacklist
+more refinements to chat commands
 perhaps create a formspec for editing settings from within game
 more testing
 this might be better as a modpack w/ mods ...
@@ -11,7 +12,7 @@ this might be better as a modpack w/ mods ...
 	and (because of limitations in mod storage) a mod that records a history of
 		items that the player has encountered
 
-CURRENT: testing mod storage, no cmd debug.local, back to drawing board errr..
+CURRENT: testing mod storage
 --]]
 local load_time_start = minetest.get_us_time()
 
@@ -24,21 +25,6 @@ smart_pickup = {
 -- https://dev.minetest.net/Storing_Data
 local mod_storage = minetest.get_mod_storage()
 --error(dump(mod_storage))
-
-function depack(t)
-	if type(t) ~= 'table' then
-		return error(string.format("type: %s\tvalue: %q", type(t), t))
-	end
-	--if #t == 0 then
-	--	return "[empty list]"
-	--end
-
-	local s = ""
-	for k,v in pairs(t) do
-		s = s..tostring(k).."="..tostring(v).."\n"
-	end
-	return s
-end
 
 -- write to mod storage
 function record(name)
@@ -91,7 +77,6 @@ local player_collect_height = 1 --added to player pos y value, not recommended f
 local velocity_gain = 0.1 --a multiplier, not sure if this makes much difference
 --------------------------------------------------------------------------------
 
---TODO wtf local pickup_particle = pickup_particle ~= false
 local automode = mode == "Auto" or mode == "Both"
 local keymode = mode == "KeyPress" or mode == "Both"
 local players = {}
@@ -119,6 +104,7 @@ minetest.register_on_dieplayer(function(player)
 		table.remove(players, player)
 	end
 end)
+-- this was added with the intention of recording a history of items encountered
 smart_pickup.encounter=function (name, itemstring)
 	--local test = smart_pickup.players[player].items[itemstring]
 	local item_list = smart_pickup.players[name]
@@ -127,6 +113,22 @@ smart_pickup.encounter=function (name, itemstring)
 		-- write to mod storage
 		record(name)
 	end
+end
+
+-- functional equivilant of upack but for a non indexed table
+function depack(t)
+	if type(t) ~= 'table' then
+		return error(string.format("type: %s\tvalue: %q", type(t), t))
+	end
+	--if #t == 0 then
+	--	return "[empty list]"
+	--end
+
+	local s = ""
+	for k,v in pairs(t) do
+		s = s..tostring(k).."="..tostring(v).."\n"
+	end
+	return s
 end
 minetest.register_chatcommand("item_ignore", {
 	privs = {
@@ -286,7 +288,7 @@ items_record_inv:set_size("main", 8)
 -- Show form when the /formspec command is used.
 minetest.register_chatcommand("pickup", {
 	func = function(name, param)
-		minetest.show_formspec(name, "smart_pickup:blacklist",
+		minetest.show_formspec(name, "smart_pickup:main",
 				"size[8,6]" ..
 				"label[0,0;Hello, " .. name .. "]" ..
 				"field[1,1.5;3,1;name;Name;]" ..
@@ -296,7 +298,7 @@ minetest.register_chatcommand("pickup", {
 
 -- Register callback
 minetest.register_on_player_receive_fields(function(player, formname, fields)
-    if formname ~= "smart_pickup:blacklist" then
+    if formname ~= "smart_pickup:main" then
         -- Formname is not mymod:form,
         -- exit callback.
         return false
