@@ -7,9 +7,6 @@ add an option to Player Settings that adds a list of default items
 !!!research and developement on player data management
 perhaps create a formspec for editing settings from within game
 organization is becomeing more important
-	change 'smart_pickup.players' to 'blacklist'???
-	change 'players' to 'smart_pickup.players'???
-	wtf is going on with 'smart_pickup.encounter' eh ???
 perhaps change over to a modpack
 record a history of items that the player has encountered
 
@@ -17,7 +14,7 @@ CURRENT: orgainzeing, documenting
 
 BUGS:
 *there is some kind ow wackiness going on with the blacklist that causes the
-player to sometimes pick up blacklisted items it seems to pick up two at a time
+player to pick up blacklisted items when they are in multiples
 --]]
 local load_time_start = minetest.get_us_time()
 
@@ -26,7 +23,6 @@ smart_pickup = {
 	players = {}
 }
 
--- TODO eliminate this
 dofile(smart_pickup.path..DIR_DELIM.."helper.lua")
 
 -- mod storage handleing
@@ -86,12 +82,11 @@ populate_from_settingtypes(getfenv(1))
 local player_collect_height = 1 --added to player pos y value, not recommended for change
 local velocity_gain = 0.1 --a multiplier, not sure if this makes much difference
 --------------------------------------------------------------------------------
-
 local automode = mode == "Auto" or mode == "Both"
 local keymode = mode == "KeyPress" or mode == "Both"
 
  -- a unique form of get_connected_players with better filtering
-local players = {}
+local players = smart_pickup.players
 do
 	minetest.register_on_joinplayer(function(player)
 		local name = player:get_player_name()
@@ -120,6 +115,7 @@ end
 -- this was added with the intention of recording a history of items encountered
 smart_pickup.encounter = function (name, itemstring)
 	local item_list = blacklist[name]
+	itemstring = itemstring:gsub('[ _%d]([ _%d])','')
 	if not item_list[itemstring] then
 		item_list[itemstring] = false
 		-- write to mod storage
@@ -141,6 +137,7 @@ do -- chat commands etc.
 		end
 		return s
 	end
+
 	minetest.register_chatcommand("item", {
 		privs = {
 			interact = true
@@ -155,6 +152,7 @@ do -- chat commands etc.
 			return rb, rs
 		end
 	})
+
 	minetest.register_chatcommand("item ignore", {
 		privs = {
 			interact = true
@@ -165,13 +163,18 @@ do -- chat commands etc.
 	command.ignore = function(name, itemstring)
 		local item_list = blacklist[name]
 		if not minetest.registered_items[itemstring] then
-			return false, string.format("%q is not a registered item.", itemstring)
+			return false, string.format("%q is not a registered item.", itemstring or "")
 		end
-
+		 --remove unnesisary sequences ie:grass_1, grass_2 are seen as the same
+		itemstring = itemstring:gsub('[ _%d]([ _%d])','')
+		if item_list[itemstring] == true then
+			return false, string.format("%q is already registered.", itemstring)
+		end
 		item_list[itemstring] = true
 		record(name)
 		return true, string.format("%q added to blacklist.", itemstring)
 	end
+
 	minetest.register_chatcommand("item pickup", {
 		privs = {
 			interact = true
@@ -189,6 +192,7 @@ do -- chat commands etc.
 		record(name)
 		return true, depack(item_list) or "[empty list]"
 	end
+
 	minetest.register_chatcommand("item list", {
 		privs = {
 			interact = true
@@ -199,6 +203,7 @@ do -- chat commands etc.
 		local item_list = blacklist[name]
 		minetest.chat_send_player(name, depack(item_list))
 	end
+
 	minetest.register_chatcommand("item clear", {
 		privs = {
 			interact = true
@@ -206,8 +211,9 @@ do -- chat commands etc.
 		description = "clear list of items to be ignored."
 	})
 	command.clear = function(name)
-		blacklist[name] = ""
+		blacklist[name] = {}
 		record(name)
+		return true, "smart pickup's blacklist of items to ignore has been cleared"
 	end
 end
 
@@ -346,6 +352,7 @@ local function collect_item(ent, pos, player)
 	local item = ItemStack(ent.itemstring)
 -- record encounter into item history
 smart_pickup.encounter(player:get_player_name(), ent.itemstring)
+minetest.chat_send_player(player:get_player_name(), "picked up "..ent.itemstring)
 	local inv = player:get_inventory()
 	if not inv:room_for_item("main", item) then
 		return
@@ -470,11 +477,13 @@ minetest.register_globalstep(function(dtime)
 			--]]
 
 			if ent and not object:is_player() then
-				if ent.name == "__builtin:item" and ent.itemstring ~= ""
+				if ent.name == "__builtin:item" and ent.itemstring ~= "" then
+				--ignore digits, spaces, underscores
+				local itemstring = ent.itemstring:gsub('[ _%d]([ _%d])','')
+				if not itemstring then error("DEBUG ME:"..ent.itemstring) end
 ------- this is the insertion point for any items that are to be ignored -------
-				and ent.dropped_by ~= name --items dropped by current player
-				--and not blacklist[name][ent.itemstring]
-				and not blacklist[name][ent.itemstring] --blacklisted
+				if ent.dropped_by ~= name --items dropped by current player
+				and not blacklist[name][itemstring] --blacklisted
 				then ---[[
 					if vector.length(v) <= pickup_radius then
 						if automode
@@ -509,6 +518,7 @@ minetest.register_globalstep(function(dtime)
 							end
 						end -- mode selection conditionals
 					end -- grabs nearby objects
+				end
 				end -- conditionals for ignored items
 			end -- if ent and not object:is_player()
 		end -- objects loop
@@ -589,8 +599,4 @@ end --]]
 
 local time = (minetest.get_us_time() - load_time_start) / 1000000
 local msg = "[smart_pickup] loaded after ca. " .. time .. " seconds."
-if time > 0.01 then
-	print(msg)
-else
-	minetest.log("info", msg)
-end
+if time > 0.01 then print(msg) else minetest.log("info", msg) end
