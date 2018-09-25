@@ -23,8 +23,8 @@ extract = function (...)
 
 	local msg = ""
 	function send_msg()
-		--minetest.log("warning", msg)
-		print("WARNING: "..msg)
+		minetest.log("warning", msg)
+		--print("WARNING: "..msg)
 		msg = ""
 	end
 

@@ -10,11 +10,11 @@ organization is becomeing more important
 perhaps change over to a modpack
 record a history of items that the player has encountered
 
-CURRENT: orgainzeing, documenting
+CURRENT:
+adjusting blacklist mechanics and chat commands to function with a bit
+	more finesse
 
 BUGS:
-*there is some kind ow wackiness going on with the blacklist that causes the
-player to pick up blacklisted items when they are in multiples
 --]]
 local load_time_start = minetest.get_us_time()
 
@@ -29,6 +29,7 @@ dofile(smart_pickup.path..DIR_DELIM.."helper.lua")
 -- https://dev.minetest.net/Storing_Data
 local mod_storage = minetest.get_mod_storage()
 local blacklist = {}
+local MOD_DELIM = ", " --this keeps load and save functions cooperating together
 local mod_storage_read
 local record
 do
@@ -39,7 +40,7 @@ do
 		local item_list = blacklist[name]
 		local item_list_string = ""
 		for item, val in pairs(item_list) do
-			if val then item_list_string = item.."\n"..item_list_string end
+			if val then item_list_string = item..MOD_DELIM..item_list_string end
 		end
 		mod_storage:set_string(name, item_list_string)
 		minetest.log("action", name.." record: "..item_list_string)
@@ -49,7 +50,7 @@ do
 			local item_list = {}
 			local item_list_string = mod_storage:get_string(name)
 			--if item_list_string and not item_list_string == "" then
-				item_list = extract(item_list_string)
+				item_list = extract(item_list_string, MOD_DELIM)
 				--error(unpack(item_list))
 				for _, item in pairs(item_list) do
 					blacklist[name][item] = true
@@ -148,7 +149,7 @@ do -- chat commands etc.
 			local args = extract(params)
 			local case, itemstring = unpack(args)
 			if not command[case] then return false, "what!*?" end
-			rb, rs = command[case](name, itemstring)
+			local rb, rs = command[case](name, itemstring)
 			return rb, rs
 		end
 	})
@@ -162,8 +163,17 @@ do -- chat commands etc.
 	})
 	command.ignore = function(name, itemstring)
 		local item_list = blacklist[name]
-		if not minetest.registered_items[itemstring] then
-			return false, string.format("%q is not a registered item.", itemstring or "")
+		if not (
+		minetest.registered_items[itemstring] or
+		minetest.registered_items[itemstring.."_1"]
+		) then
+			itemstring = "default:"..itemstring
+			if not(
+			minetest.registered_items[itemstring] or
+			minetest.registered_items[itemstring.."_1"]
+			) then
+				return false, string.format("%q is not a registered item.", itemstring or "")
+			end
 		end
 		 --remove unnesisary sequences ie:grass_1, grass_2 are seen as the same
 		itemstring = itemstring:gsub('[ _%d]([ _%d])','')
