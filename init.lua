@@ -15,6 +15,7 @@ adjusting blacklist mechanics and chat commands to function with a bit
 	more finesse
 
 BUGS:
+
 --]]
 local load_time_start = minetest.get_us_time()
 
@@ -126,11 +127,15 @@ end
 
 do -- chat commands etc.
 	local command = {}
-	-- functional equivilant of upack but for a non indexed table
-	function depack(t)
+	-- redefine unpack to handle non-indexed table
+	local tmp = unpack
+	function unpack(t)
 		if type(t) ~= 'table' then
-			return error(string.format("type: %s\tvalue: %q", type(t), t))
+			local msg = string.format(
+				"bad argument #%d to 'unpack' (table expected, got %s)",
+				1, type(t)); error(msg, 2)
 		end
+		if #t > 0 then return tmp(t) end
 
 		local s = ""
 		for k,v in pairs(t) do
@@ -149,8 +154,44 @@ do -- chat commands etc.
 			local args = extract(params)
 			local case, itemstring = unpack(args)
 			if not command[case] then return false, "what!*?" end
-			local rb, rs = command[case](name, itemstring)
-			return rb, rs
+
+			-- handle itemstring input
+			-- TODO some of this might be a bit patchy
+			if case == "ignore" or case == "pickup" then
+				if not itemstring then
+					return false, case.." what item?"
+				end
+				local group = itemstring:match("group:(%S*)")
+				if group then
+					if minetest.registered_groups[group] then
+						local s = ""
+						--TODO is this registering aliases?
+						--TODO does it matter that items like grass_1, grass_2 are being registered repeatedly
+						for i, _ in pairs(minetest.registered_groups[group]) do
+							command[case](name, i)
+							--s = i..", "..s
+						end
+						return true, case.." "..itemstring.. " successful!"..s
+					else
+						return false, string.format("%q is not a valid group.", group or "")
+					end
+				end
+				itemstring = minetest.registered_aliases[itemstring] or itemstring
+				if not (
+				minetest.registered_items[itemstring] or
+				minetest.registered_items[itemstring.."_1"]
+				) then
+					itemstring = "default:"..itemstring
+					if not(
+					minetest.registered_items[itemstring] or
+					minetest.registered_items[itemstring.."_1"]
+					) then
+						return false, string.format("%q is not a registered item.", itemstring or "")
+					end
+				end
+			end
+
+			return command[case](name, itemstring)
 		end
 	})
 
@@ -163,18 +204,7 @@ do -- chat commands etc.
 	})
 	command.ignore = function(name, itemstring)
 		local item_list = blacklist[name]
-		if not (
-		minetest.registered_items[itemstring] or
-		minetest.registered_items[itemstring.."_1"]
-		) then
-			itemstring = "default:"..itemstring
-			if not(
-			minetest.registered_items[itemstring] or
-			minetest.registered_items[itemstring.."_1"]
-			) then
-				return false, string.format("%q is not a registered item.", itemstring or "")
-			end
-		end
+
 		 --remove unnesisary sequences ie:grass_1, grass_2 are seen as the same
 		itemstring = itemstring:gsub('[ _%d]([ _%d])','')
 		if item_list[itemstring] == true then
@@ -195,12 +225,12 @@ do -- chat commands etc.
 	command.pickup = function(name, itemstring)
 		local item_list = blacklist[name]
 		if item_list[itemstring] == nil then
-			return false, depack(item_list)or"[empty list]"
+			return false, unpack(item_list) or "[empty list]"
 		end
 
 		item_list[itemstring] = false
 		record(name)
-		return true, depack(item_list) or "[empty list]"
+		return true, string.format("%q removed from blacklist.", itemstring)
 	end
 
 	minetest.register_chatcommand("item list", {
@@ -211,7 +241,7 @@ do -- chat commands etc.
 	})
 	command.list = function(name)
 		local item_list = blacklist[name]
-		minetest.chat_send_player(name, depack(item_list))
+		minetest.chat_send_player(name, unpack(item_list))
 	end
 
 	minetest.register_chatcommand("item clear", {
@@ -223,7 +253,7 @@ do -- chat commands etc.
 	command.clear = function(name)
 		blacklist[name] = {}
 		record(name)
-		return true, "smart pickup's blacklist of items to ignore has been cleared"
+		return true, "smart pickup's item  blacklist has been cleared!"
 	end
 end
 

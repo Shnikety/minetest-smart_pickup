@@ -22,7 +22,7 @@ extract = function (...)
 	local getlocal = {...}
 
 	local msg = ""
-	function send_msg()
+	local function send_msg()
 		minetest.log("warning", msg)
 		--print("WARNING: "..msg)
 		msg = ""
@@ -36,8 +36,7 @@ extract = function (...)
 		if value and t ~= "string" then
 			local msg = string.format(
 				"bad argument #%d to 'extract' (string expected, got %s)",
-				number, t)
-			error(msg, 2)
+				number, t); error(msg, 2)
 		end
 
 		-- escape magic characters
@@ -68,16 +67,14 @@ extract = function (...)
 				if t[i] then
 					msg = string.format(
 						"input error at line #%d in 'extract' (double assignment of index %q)",
-						n, i)
-					send_msg()
+						n, i); send_msg()
 				end
 
 				t[i] = val
 			else
 				msg = string.format(
 					"input error at line #%d in 'extract' (un-assigned value)",
-					n)
-				send_msg()
+					n); send_msg()
 			end
 			n = n + 1
 		end
@@ -98,8 +95,7 @@ populate_from_settingtypes = function (pointer, flags)
 	if type(pointer) ~= "table" then
 		local msg = string.format(
 			"bad argument #%d to 'extract' (table expected, got %s)",
-			1, type(pointer))
-		error(msg, 2)
+			1, type(pointer)); error(msg, 2)
 	end
 	flags = flags or {}
 	local setting = {}
@@ -145,3 +141,16 @@ populate_from_settingtypes = function (pointer, flags)
 	end
 end
 
+-- hmm, is this realy necessary? is there something in MT API for this?
+minetest.registered_groups = {}
+minetest.after(0, function() -- get groups after loading all mods
+	local g = minetest.registered_groups
+	for name, def in pairs(minetest.registered_items) do
+		if name ~= "" then
+			for group, val in pairs(def.groups) do
+				g[group] = g[group] or {}
+				g[group][name] = def
+			end
+		end
+	end
+end)
