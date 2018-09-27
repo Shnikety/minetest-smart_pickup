@@ -22,7 +22,7 @@ extract = function (...)
 	local getlocal = {...}
 
 	local msg = ""
-	local function send_msg()
+	local send_msg = function()
 		minetest.log("warning", msg)
 		--print("WARNING: "..msg)
 		msg = ""

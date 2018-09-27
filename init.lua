@@ -15,7 +15,7 @@ adjusting blacklist mechanics and chat commands to function with a bit
 	more finesse
 
 BUGS:
-
+possibly something going on in helper.lua
 --]]
 local load_time_start = minetest.get_us_time()
 
@@ -86,6 +86,8 @@ local velocity_gain = 0.1 --a multiplier, not sure if this makes much difference
 --------------------------------------------------------------------------------
 local automode = mode == "Auto" or mode == "Both"
 local keymode = mode == "KeyPress" or mode == "Both"
+--strip ending: digits, spaces & underscores
+function string:strip () return string.gsub(self,'[ _%d]([ _%d])','') end
 
  -- a unique form of get_connected_players with better filtering
 local players = smart_pickup.players
@@ -117,7 +119,7 @@ end
 -- this was added with the intention of recording a history of items encountered
 smart_pickup.encounter = function (name, itemstring)
 	local item_list = blacklist[name]
-	itemstring = itemstring:gsub('[ _%d]([ _%d])','')
+	itemstring = itemstring:strip()
 	if not item_list[itemstring] then
 		item_list[itemstring] = false
 		-- write to mod storage
@@ -171,7 +173,7 @@ do -- chat commands etc.
 							command[case](name, i)
 							--s = i..", "..s
 						end
-						return true, case.." "..itemstring.. " successful!"..s
+						return true, case.." "..itemstring.." successful!"..s
 					else
 						return false, string.format("%q is not a valid group.", group or "")
 					end
@@ -204,9 +206,7 @@ do -- chat commands etc.
 	})
 	command.ignore = function(name, itemstring)
 		local item_list = blacklist[name]
-
-		 --remove unnesisary sequences ie:grass_1, grass_2 are seen as the same
-		itemstring = itemstring:gsub('[ _%d]([ _%d])','')
+		itemstring = itemstring:strip()
 		if item_list[itemstring] == true then
 			return false, string.format("%q is already registered.", itemstring)
 		end
@@ -518,8 +518,7 @@ minetest.register_globalstep(function(dtime)
 
 			if ent and not object:is_player() then
 				if ent.name == "__builtin:item" and ent.itemstring ~= "" then
-				--ignore digits, spaces, underscores
-				local itemstring = ent.itemstring:gsub('[ _%d]([ _%d])','')
+				local itemstring = ent.itemstring:strip()
 				if not itemstring then error("DEBUG ME:"..ent.itemstring) end
 ------- this is the insertion point for any items that are to be ignored -------
 				if ent.dropped_by ~= name --items dropped by current player
