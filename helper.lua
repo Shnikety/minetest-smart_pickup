@@ -1,40 +1,108 @@
 --------------------------------------------------------------------------------
 -- helper.lua
 -- by Shnikety(jbgroff)
--- with help from Linuxdirk @ https://forum.minetest.net/viewtopic.php?p=285505#
-
--- This file uses "settingtypes.txt" to build Lua variables for a MineTest mod.
-
--- see also https://dev.minetest.net/settingtypes.txt
+-- built for MineTest
+-- https://www.minetest.net/
 --------------------------------------------------------------------------------
 
-
-if not minetest then
-	minetest = {}
-	minetest.is_yes = function (value)
-		if value == "true" then return true else return false end
-	end
-	minetest.settings = {}
-	minetest.settings.get_bool = function (_,value)
-		return minetest.is_yes
-	end
-	minetest.get_current_modname = function() return "smart_pickup" end
-	minetest.get_modpath = function() return "." end
-	DIR_DELIM = "/"
+--[[
+function minetest.log(level, msg)
+	local _G = getfenv(0)
+	local log_message = _G.minetest.log
+	msg = string.format("[%s] %s", minetest.get_current_modname(), msg)
+	log_message(level, msg)
 end
---if not minetest.settings
+--]]
+
+-- turns a string into a Lua table, ie:
+-- extract("a b c") --> {[1] = "a", [2] = "b", [3] = "c"}
+-- extract("a:45; b:15; c:3", ";", ":") --> {[a] = "45", [b] = "15", [c] = "3"}
+extract = function (...)
+	local input, separator, assignment
+	local getlocal = {...}
+
+	local msg = ""
+	local send_msg = function()
+		minetest.log("warning", msg)
+		--print("WARNING: "..msg)
+		msg = ""
+	end
+
+	for number = 1, #getlocal do
+		local value = getlocal[number]
+		local t = type(value)
+
+		-- error handleing
+		if value and t ~= "string" then
+			local msg = string.format(
+				"bad argument #%d to 'extract' (string expected, got %s)",
+				number, t); error(msg, 2)
+		end
+
+		-- escape magic characters
+		if value and number ~= 1 then value = value:gsub('([%(%)%.%%%+%-%*%?%[%^%$])', '%%%1') end
+
+		-- check for blank strings
+		if value and not value:match('%S+') then value = nil end
+
+		debug.setlocal(1 ,number, value)
+	end
+
+	-- return a blank table if no input was given
+	if not input then
+		msg = "blank table returned: "..debug.traceback("",2); send_msg()
+		return {}
+	end
+	-- default to useing space characters if no other separator is given
+	if not separator then separator = "%s" end
+
+	local t = {}
+	local i = 1
+	if assignment then
+		local n = 1
+		for line in input:gmatch('([^'..separator..']+)') do
+			i = line:match('%s*(.-)'..assignment)
+			val = line:match(assignment..'(.*)')
+			if line:match(assignment) then
+				if t[i] then
+					msg = string.format(
+						"input error at line #%d in 'extract' (double assignment of index %q)",
+						n, i); send_msg()
+				end
+
+				t[i] = val
+			else
+				msg = string.format(
+					"input error at line #%d in 'extract' (un-assigned value)",
+					n); send_msg()
+			end
+			n = n + 1
+		end
+	else
+		for val in input:gmatch('([^'..separator..']+)') do
+			t[i] = val
+			i = i + 1
+		end
+	end
+	return t
+end
 
 -- add variables to the local environment
+-- This file uses "settingtypes.txt" to build Lua variables for a MineTest mod.
+-- see also https://dev.minetest.net/settingtypes.txt
+-- w/ thanks to Linuxdirk @ https://forum.minetest.net/viewtopic.php?p=285505#
 populate_from_settingtypes = function (pointer, flags)
 	if type(pointer) ~= "table" then
-		error("populate_from_settingtypes func requires a pointer to a table")
+		local msg = string.format(
+			"bad argument #%d to 'extract' (table expected, got %s)",
+			1, type(pointer)); error(msg, 2)
 	end
 	flags = flags or {}
 	local setting = {}
 	local modname = minetest.get_current_modname()
 	local path = minetest.get_modpath(modname)
-	local filename = path..DIR_DELIM..'settingtypes.txt'
-	local file = io.open(filename, 'rb')
+	local filepath = path..DIR_DELIM..'settingtypes.txt'
+	local file = assert(io.open(filepath, 'rb'))
 
 	if file ~= nil then
 		local lines = {}
@@ -72,3 +140,17 @@ populate_from_settingtypes = function (pointer, flags)
 		pointer[key] = value
 	end
 end
+
+-- hmm, is this realy necessary? is there something in MT API for this?
+minetest.registered_groups = {}
+minetest.after(0, function() -- get groups after loading all mods
+	local g = minetest.registered_groups
+	for name, def in pairs(minetest.registered_items) do
+		if name ~= "" then
+			for group, val in pairs(def.groups) do
+				g[group] = g[group] or {}
+				g[group][name] = def
+			end
+		end
+	end
+end)
